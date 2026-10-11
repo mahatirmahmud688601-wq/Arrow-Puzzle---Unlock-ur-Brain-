@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Arrow Puzzle: Unlock ur Brain</title>
+<style>
+:root{--bg:#f1f5fc;--sf:#fff;--bd:#e3eaf5;--ar:#0e1b4d;--ac:#1e88ff;--dg:#ff4d4f;--dot:#cbd3e1;--cell:#f2f5fb;--chip:#e9eff9;--tx:#12183a;--tx2:#5b6585;--gold:#ffb800;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#080d20;--sf:#141c3c;--bd:#263059;--ar:#e6ecff;--ac:#4da3ff;--dg:#ff6b6b;--dot:#2b3664;--cell:#151d3f;--chip:#1b2549;--tx:#f2f5ff;--tx2:#9aa6cc;--gold:#ffc83d}}
+:root[data-theme=dark]{--bg:#080d20;--sf:#141c3c;--bd:#263059;--ar:#e6ecff;--ac:#4da3ff;--dg:#ff6b6b;--dot:#2b3664;--cell:#151d3f;--chip:#1b2549;--tx:#f2f5ff;--tx2:#9aa6cc;--gold:#ffc83d}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;-webkit-user-select:none;user-select:none}
+#app{width:100%;max-width:560px;height:100%;display:flex;flex-direction:column;padding:8px 12px;box-sizing:border-box;gap:8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.ib{width:42px;height:42px;border-radius:14px;background:var(--chip);color:var(--ac);font-size:20px;font-weight:800}
+.ib:disabled{opacity:.35;cursor:default}
+.t{text-align:center;flex:1}.t b{font-size:20px;font-weight:800}
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:800;background:var(--chip);margin-top:3px}
+.bar{height:8px;border-radius:8px;background:var(--chip);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+.sm{font-size:13px;font-weight:700;color:var(--tx2);text-align:center}
+.pill{padding:6px 12px;border-radius:14px;background:var(--chip);font-weight:800;font-size:14px;min-width:54px;text-align:center}
+#hearts{font-size:24px;letter-spacing:3px}
+#stage{flex:1;min-height:0;position:relative}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:manipulation}
+#tip{position:absolute;top:4px;left:50%;transform:translate(-50%,-14px);opacity:0;transition:.2s;background:var(--ac);color:#fff;font-weight:800;font-size:14px;padding:7px 16px;border-radius:20px;pointer-events:none}
+#tip.on{opacity:1;transform:translate(-50%,0)}#tip.w{background:var(--dg)}
+.st{display:flex;gap:8px}.st div{flex:1;background:var(--chip);border-radius:14px;padding:6px;text-align:center}
+.st small{display:block;font-size:11px;font-weight:700;color:var(--tx2)}.st b{font-size:17px}
+.act{display:flex;justify-content:center;gap:22px}
+.rb{position:relative;width:54px;height:54px;border-radius:50%;background:var(--sf);border:1px solid var(--bd);font-size:22px;color:var(--ac);box-shadow:0 6px 16px rgba(30,136,255,.18)}
+.rb.on{border:2px solid var(--ac)}
+.rb u{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:var(--ac);color:#fff;font:800 12px/22px system-ui;text-decoration:none}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px}
+#ov.on{display:flex}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:26px;padding:22px;width:100%;max-width:340px;text-align:center;animation:pop .25s}
+@keyframes pop{from{transform:scale(.88);opacity:0}}
+.card h2{margin:0 0 6px;font-size:26px}.card p{margin:4px 0 14px;color:var(--tx2)}
+.stars{font-size:46px;color:var(--dot);letter-spacing:4px}.stars .on{color:var(--gold)}
+.btn{display:block;width:100%;padding:14px;border-radius:18px;font-weight:800;font-size:17px;margin-top:9px;background:var(--ac);color:#fff}
+.btn.s{background:var(--chip);color:var(--tx)}
+</style></head>
+<body><div id="app">
+<div class="row"><button class="ib" id="prev" aria-label="Previous level">◀</button>
+<div class="t"><b id="lvl">Level 1</b><br><span class="chip" id="dif">Easy</span></div>
+<button class="ib" id="next" aria-label="Next level">▶</button><button class="ib" id="thm" aria-label="Toggle theme">☾</button></div>
+<div><div class="bar"><i id="pb"></i></div><div class="sm" id="pt"></div></div>
+<div class="row"><span class="pill" id="rem"></span><span id="hearts"></span><span class="pill">Classic</span></div>
+<div id="stage"><canvas id="cv" aria-label="Puzzle board"></canvas><div id="tip"></div></div>
+<div class="st"><div><small>Moves</small><b id="mv">0</b></div><div><small>Score</small><b id="sc">0</b></div><div><small>Time</small><b id="tm">0:00</b></div></div>
+<div class="act"><button class="rb" id="hint" aria-label="Hint">💡<u id="hc">2</u></button><button class="rb on" id="grid" aria-label="Toggle grid">▦</button><button class="rb" id="rst" aria-label="Restart">↻</button></div>
+</div><div id="ov"><div class="card" id="card"></div></div>
+<script>
+const $=id=>document.getElementById(id),DIRS={u:[-1,0],d:[1,0],l:[0,-1],r:[0,1]},DK=Object.keys(DIRS);
+const S={lv:1,unlocked:1,rec:{},grid:true,dark:null};
+try{Object.assign(S,JSON.parse(localStorage.getItem('apz')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('apz',JSON.stringify(S))}catch(e){}};
+const U=x=>Math.max(0,Math.min(1,x)),now=()=>performance.now();
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const AN=[[1,4,5],[10,7,9],[30,9,13],[60,11,16],[100,13,19],[200,14,22]];
+function params(lv){let c=14,r=22;for(let i=0;i<5;i++){const[a,c0,r0]=AN[i],[b,c1,r1]=AN[i+1];if(lv>=a&&lv<b){const t=(lv-a)/(b-a);c=Math.round(c0+(c1-c0)*t);r=Math.round(r0+(r1-r0)*t);break}}
+return{rows:r,cols:c,maxLen:Math.round(3+4*U((lv-1)/120)),long:.12*U(lv/100),turn:.12+.33*U(lv/120),cand:Math.round(3+4*U(lv/100)),pref:-.6+1.6*U(lv/40)}}
+const diff=lv=>lv<=10?['Easy',1,'#22c55e']:lv<=30?['Medium',1.2,'#1e88ff']:lv<=60?['Hard',1.5,'#ff9f1c']:lv<=100?['Expert',1.8,'#ff4d4f']:['Master',2.2,'#8b5cf6'];
+/* ---------- engine ---------- */
+const dirOf=(a,b)=>{const dr=b[0]-a[0],dc=b[1]-a[1];return dr<0?'u':dr>0?'d':dc<0?'l':'r'};
+const mk=(id,cells,rnd)=>({id,cells,d:cells.length>1?dirOf(cells[cells.length-2],cells[cells.length-1]):DK[Math.floor(rnd()*4)]});
+const paint=(g,P,cells,v)=>{for(const[r,c]of cells)g[r*P.cols+c]=v};
+function ray(g,P,a,fn){const[dr,dc]=DIRS[a.d];let[r,c]=a.cells[a.cells.length-1];r+=dr;c+=dc;while(r>=0&&r<P.rows&&c>=0&&c<P.cols){const v=g[r*P.cols+c];if(v!==-1&&fn(v))return v;r+=dr;c+=dc}return null}
+const isFree=(g,P,a)=>ray(g,P,a,()=>true)===null;
+function grow(s,occ,P,rnd){const{rows,cols}=P;const tl=rnd()<P.long?P.maxLen+Math.floor(rnd()*(P.maxLen+1)):2+Math.floor(rnd()*(P.maxLen-1));
+const path=[s],seen=new Set([s[0]*cols+s[1]]);let last=null;
+while(path.length<tl){const[r,c]=path[path.length-1],o=[];
+for(const k of DK){const nr=r+DIRS[k][0],nc=c+DIRS[k][1];if(nr<0||nr>=rows||nc<0||nc>=cols)continue;const i=nr*cols+nc;if(!occ[i]&&!seen.has(i))o.push(k)}
+if(!o.length)break;let k;if(last&&o.includes(last)&&rnd()>=P.turn)k=last;else{const t=o.filter(x=>x!==last),a=t.length?t:o;k=a[Math.floor(rnd()*a.length)]}
+const n=[r+DIRS[k][0],c+DIRS[k][1]];path.push(n);seen.add(n[0]*cols+n[1]);last=k}
+return path}
+function fix(a,g,P,A,rnd){
+if(a.cells.length===1){for(const d of DK){const t={id:a.id,cells:a.cells,d};if(isFree(g,P,t)){A.set(a.id,t);return true}}return false}
+const f=mk(a.id,[...a.cells].reverse(),rnd);if(isFree(g,P,f)){A.set(a.id,f);return true}
+for(const cells of[a.cells,[...a.cells].reverse()])for(let k=cells.length-1;k>=2;k--){const cut=cells.slice(k);paint(g,P,cut,-1);const t=mk(a.id,cells.slice(0,k),rnd);if(isFree(g,P,t)){A.set(a.id,t);return true}paint(g,P,cut,a.id)}
+return false}
+function repair(list,P,rnd){const g=new Array(P.rows*P.cols).fill(-1),A=new Map(),rem=new Set();
+for(const a of list){A.set(a.id,a);rem.add(a.id);paint(g,P,a.cells,a.id)}
+while(rem.size){const fr=[];for(const id of rem){const a=A.get(id);if(isFree(g,P,a))fr.push(a)}
+if(fr.length){for(const a of fr){paint(g,P,a.cells,-1);rem.delete(a.id)}continue}
+const st=[...rem].sort((x,y)=>x-y),v=A.get(st[Math.floor(rnd()*st.length)]);
+if(!fix(v,g,P,A,rnd)){paint(g,P,v.cells,-1);rem.delete(v.id);A.delete(v.id)}}
+return[...A.values()].sort((a,b)=>a.id-b.id)}
+function build(P,rnd){const{rows,cols}=P,occ=new Array(rows*cols).fill(false),paths=[],ord=[...Array(rows*cols).keys()];
+for(let i=ord.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[ord[i],ord[j]]=[ord[j],ord[i]]}
+for(const i of ord){if(occ[i])continue;const s=[Math.floor(i/cols),i%cols];let b=null;
+for(let k=0;k<2;k++){const p=grow(s,occ,P,rnd);if(!b||p.length>b.length)b=p}
+if(b.length<2)continue;for(const[r,c]of b)occ[r*cols+c]=true;paths.push(rnd()<.5?b.reverse():b)}
+return repair(paths.map((p,i)=>mk(i,p,rnd)),P,rnd)}
+function solve(arrows,P){const g=new Array(P.rows*P.cols).fill(-1);for(const a of arrows)paint(g,P,a.cells,a.id);
+let rem=arrows.slice(),layers=0,init=0;
+while(rem.length){const fr=rem.filter(a=>isFree(g,P,a));if(!fr.length)break;if(!layers)init=fr.length;for(const a of fr)paint(g,P,a.cells,-1);rem=rem.filter(a=>!fr.includes(a));layers++}
+return{ok:!rem.length,layers,init}}
+function generate(lv,P){const seed=lv*100003+17,t0=now();let best=null,bs=-1e9;
+for(let t=1;t<=P.cand*2;t++){const arr=build(P,rng(seed+t*7919));if(arr.length<3)continue;const r=solve(arr,P);if(!r.ok)continue;
+const fill=arr.reduce((n,a)=>n+a.cells.length,0)/(P.rows*P.cols),sc=P.pref*r.layers+arr.length*.12+fill*2+(1-P.pref)*r.init*.15;
+if(sc>bs){bs=sc;best=arr}if(best&&now()-t0>350)break}
+if(!best){best=[];for(let r=0;r<P.rows;r+=2)best.push({id:r,cells:Array.from({length:P.cols-1},(_,c)=>[r,c]),d:'r'})}
+return best}
+/* ---------- game state ---------- */
+let G=null,run=false;
+function start(lv){S.lv=lv;save();const P=params(lv),arrows=generate(lv,P);G={lv,P,arrows,byId:new Map(arrows.map(a=>[a.id,a]))};reset()}
+function reset(){const{P,arrows}=G;G.g=new Array(P.rows*P.cols).fill(-1);for(const a of arrows)paint(G.g,P,a.cells,a.id);
+Object.assign(G,{alive:new Set(arrows.map(a=>a.id)),lives:3,hints:2,moves:0,mist:0,t0:now(),el:0,hintId:null,anims:[],over:null,noLives:false});
+$('ov').classList.remove('on');ui();loop()}
+const elapsed=()=>G.over?G.el:now()-G.t0;
+function blockerOf(a){return ray(G.g,G.P,a,()=>true)}
+function tap(id){if(G.over||!G.alive.has(id))return;const a=G.byId.get(id);G.moves++;
+if(isFree(G.g,G.P,a)){paint(G.g,G.P,a.cells,-1);G.alive.delete(id);if(G.hintId===id)G.hintId=null;
+G.anims=G.anims.filter(x=>x.a!==a);G.anims.push({k:'slide',a,t:now(),ex:exitDist(a)});buzz(12);if(!G.alive.size)win()}
+else{G.mist++;if(!G.noLives)G.lives--;G.anims=G.anims.filter(x=>x.a!==a);G.anims.push({k:'shake',a,t:now()});
+const b=blockerOf(a);if(b!==null&&b!==id)G.anims.push({k:'flash',a:G.byId.get(b),t:now()});buzz(45);tip('Path blocked!',1);
+if(G.lives<=0){G.over='lose';G.el=elapsed();setTimeout(showLose,450)}}
+ui();loop()}
+function hint(){if(G.over)return;let a=G.hintId!==null?G.byId.get(G.hintId):null;
+if(!a){if(G.hints<=0)return tip('No hints left',1);const free=[...G.alive].map(i=>G.byId.get(i)).filter(x=>isFree(G.g,G.P,x));if(!free.length)return;
+const sole={},any={};for(const i of G.alive){const bl=new Set();ray(G.g,G.P,G.byId.get(i),v=>{bl.add(v);return false});bl.forEach(v=>any[v]=(any[v]||0)+1);if(bl.size===1){const v=[...bl][0];sole[v]=(sole[v]||0)+1}}
+a=free.reduce((p,q)=>((sole[q.id]||0)*100+(any[q.id]||0))>((sole[p.id]||0)*100+(any[p.id]||0))?q:p);G.hints--;G.hintId=a.id}
+G.anims=G.anims.filter(x=>x.a!==a);G.anims.push({k:'hint',a,t:now()});tip('Try this arrow.');ui();loop()}
+function win(){G.over='win';G.el=elapsed();const n=G.arrows.length,par=n*1.6+8,[,mul]=diff(G.lv),sec=G.el/1000;
+const eff=n/Math.max(n,G.moves);
+const base=400+n*20,score=Math.max(0,Math.round((base+base*.6*U(1-sec/(par*2))+base*.4*eff)*mul+G.lives*100-G.mist*50-(2-G.hints)*25));
+const stars=G.mist===0?(sec<=par*2?3:2):(G.mist<=2&&sec<=par*4?2:1);
+const old=S.rec[G.lv];S.rec[G.lv]={s:Math.max(stars,old?old.s:0),b:Math.max(score,old?old.b:0)};S.unlocked=Math.max(S.unlocked,G.lv+1);save();
+G.res={score,stars,best:!old||score>old.b};buzz([30,60,30]);setTimeout(showWin,650)}
+/* ---------- overlays ---------- */
+function ov(h){$('card').innerHTML=h;$('ov').classList.add('on')}
+function showWin(){const r=G.res,t=Math.round(G.el/1000);
+ov(`<h2>Level Complete!</h2><p>${['','Well Done!','Great Job!','Perfect!'][r.stars]}</p><div class="stars">${[1,2,3].map(i=>`<span class="${i<=r.stars?'on':''}">★</span>`).join('')}</div>
+<h2 style="margin-top:6px">Score: ${r.score.toLocaleString()}</h2>${r.best?'<p style="color:var(--gold);font-weight:800;margin:0 0 8px">New Best Score!</p>':''}
+<p>Time ${t}s · Moves ${G.moves} · Mistakes ${G.mist}</p><button class="btn" id="b1">Next Level</button><button class="btn s" id="b2">Replay</button>`);
+$('b1').onclick=()=>start(G.lv+1);$('b2').onclick=reset}
+function showLose(){ov(`<h2>Game Over</h2><p>You ran out of lives. No worries, keep going!</p><button class="btn" id="b1">Try Again</button><button class="btn s" id="b2">Restart Level</button>`);
+$('b1').onclick=()=>{G.lives=3;G.over=null;G.t0=now()-G.el;$('ov').classList.remove('on');ui();loop()};$('b2').onclick=reset}
+let tt;function tip(m,w){const e=$('tip');e.textContent=m;e.className='on'+(w?' w':'');clearTimeout(tt);tt=setTimeout(()=>e.className='',1700)}
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+/* ---------- ui ---------- */
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+function ui(){const n=G.arrows.length,done=n-G.alive.size,[dn,mul,col]=diff(G.lv);
+$('lvl').textContent='Level '+G.lv;const d=$('dif');d.textContent=dn;d.style.color=col;
+$('pb').style.width=(100*done/n)+'%';$('pt').textContent=`Progress: ${done} / ${n} arrows cleared`;$('rem').textContent='➚ '+G.alive.size;
+$('hearts').textContent='❤'.repeat(Math.max(0,G.lives))+'♡'.repeat(3-Math.max(0,G.lives));$('hearts').style.color='#ff3b4e';
+$('mv').textContent=G.moves;$('sc').textContent=Math.max(0,Math.round(done*20*mul)-G.mist*50).toLocaleString();$('hc').textContent=G.hints;
+$('prev').disabled=G.lv<=1;$('next').disabled=G.lv>=S.unlocked;$('grid').classList.toggle('on',S.grid);
+$('thm').textContent=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches)?'☀':'☾'}
+setInterval(()=>{if(G&&!G.over)$('tm').textContent=fmt(elapsed()/1000)},250);
+/* ---------- drawing ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');let geo={};
+function size(){const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;cx.setTransform(dpr,0,0,dpr,0,0);
+if(!G)return;const{rows,cols}=G.P,cell=Math.min(76,r.width/(cols+.7),r.height/(rows+.7));
+geo={cell,w:cols*cell,h:rows*cell,ox:(r.width-cols*cell)/2,oy:(r.height-rows*cell)/2,W:r.width,H:r.height};draw()}
+const pts=a=>{const p=a.cells.map(([r,c])=>[c+.5,r+.5]);if(p.length===1){const[dr,dc]=DIRS[a.d];p.unshift([p[0][0]-dc*.38,p[0][1]-dr*.38])}return p};
+const plen=p=>{let l=0;for(let i=0;i<p.length-1;i++)l+=Math.hypot(p[i+1][0]-p[i][0],p[i+1][1]-p[i][1]);return l};
+function exitDist(a){const[r,c]=a.cells[a.cells.length-1],{rows,cols}=G.P;return({u:r+.5,d:rows-r-.5,l:c+.5,r:cols-c-.5})[a.d]+plen(pts(a))+1}
+function slice(p,f,t){const o=[];let acc=0;for(let i=0;i<p.length-1;i++){const[x0,y0]=p[i],[x1,y1]=p[i+1],len=Math.hypot(x1-x0,y1-y0),s0=acc;acc+=len;if(!len||acc<f||s0>t)continue;
+const a=U((f-s0)/len),b=U((t-s0)/len),q0=[x0+(x1-x0)*a,y0+(y1-y0)*a],q1=[x0+(x1-x0)*b,y0+(y1-y0)*b];
+if(!o.length||Math.hypot(o[o.length-1][0]-q0[0],o[o.length-1][1]-q0[1])>1e-6)o.push(q0);o.push(q1)}return o}
+function arrow(p,d,col,o={}){if(p.length<2)return;const k=geo.cell,sx=o.sx||0,px=p.map(([x,y])=>[geo.ox+x*k+sx,geo.oy+y*k]);
+const[dr,dc]=DIRS[d],L=px[px.length-1],rad=k*.3;
+cx.save();cx.globalAlpha=o.op??1;cx.strokeStyle=cx.fillStyle=col;cx.lineWidth=k*.15*(o.sw||1);cx.lineCap=cx.lineJoin='round';
+if(o.glow){cx.shadowColor=o.glow;cx.shadowBlur=k*.6*(o.gs??1)}
+cx.beginPath();cx.moveTo(px[0][0],px[0][1]);
+for(let i=1;i<px.length-1;i++){const[a,b,c]=[px[i-1],px[i],px[i+1]],il=Math.hypot(b[0]-a[0],b[1]-a[1]),ol=Math.hypot(c[0]-b[0],c[1]-b[1]);if(!il||!ol)continue;const r=Math.min(rad,il/2,ol/2);
+cx.lineTo(b[0]-(b[0]-a[0])/il*r,b[1]-(b[1]-a[1])/il*r);cx.quadraticCurveTo(b[0],b[1],b[0]+(c[0]-b[0])/ol*r,b[1]+(c[1]-b[1])/ol*r)}
+cx.lineTo(L[0],L[1]);cx.stroke();
+const tx=L[0]+dc*k*.46,ty=L[1]+dr*k*.46,bx=L[0]-dc*k*.02,by=L[1]-dr*k*.02,h=k*.27;
+cx.beginPath();cx.moveTo(tx,ty);cx.lineTo(bx-dr*h,by+dc*h);cx.lineTo(bx+dr*h,by-dc*h);cx.closePath();cx.fill();cx.lineWidth=k*.05;cx.stroke();cx.restore()}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function draw(){if(!G||!geo.cell)return;const{W,H,cell,ox,oy,w,h}=geo,{rows,cols}=G.P,t=now();cx.clearRect(0,0,W,H);
+const pad=cell*.35;cx.fillStyle=css('--sf');cx.strokeStyle=css('--bd');cx.lineWidth=1;rr(ox-pad,oy-pad,w+2*pad,h+2*pad,Math.min(26,cell*.7));cx.fill();cx.stroke();
+if(S.grid){for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const ins=cell*.07;cx.fillStyle=css('--cell');rr(ox+c*cell+ins,oy+r*cell+ins,cell-2*ins,cell-2*ins,cell*.22);cx.fill();
+if(G.g[r*cols+c]===-1){cx.fillStyle=css('--dot');cx.beginPath();cx.arc(ox+(c+.5)*cell,oy+(r+.5)*cell,cell*.065,0,7);cx.fill()}}}
+const busy=new Set(G.anims.filter(x=>x.k!=='slide').map(x=>x.a.id)),ar=css('--ar'),ac=css('--ac'),dg=css('--dg');
+for(const id of G.alive)if(!busy.has(id)){const a=G.byId.get(id);arrow(pts(a),a.d,ar)}
+for(const an of G.anims){const a=an.a,age=t-an.t;
+if(an.k==='slide'){const D=Math.min(620,Math.max(260,an.ex/32*1000)),p=U(age/D),e=p*p*p*.6+p*p*.4,p0=pts(a),L=plen(p0),f=U((p-.5)/.5);
+arrow(slice([...p0,[p0[p0.length-1][0]+DIRS[a.d][1]*an.ex,p0[p0.length-1][1]+DIRS[a.d][0]*an.ex]],e*an.ex,e*an.ex+L),a.d,ac,{op:1-f*f})}
+else if(an.k==='shake'){const p=U(age/430);arrow(pts(a),a.d,mix(dg,ar,p),{sx:Math.sin(p*22)*(1-p)*cell*.13,glow:dg,gs:1-p})}
+else if(an.k==='flash'){const p=U(age/560);arrow(pts(a),a.d,mix(dg,ar,Math.min(1,p*1.3)))}
+else{const p=U(age/2800),bk=U((p-.85)/.15),pu=.5+.5*Math.sin(age/1000*9.4);arrow(pts(a),a.d,mix(ac,ar,bk),{sw:1.2*(1-bk)+bk,glow:ac,gs:(.45+.55*pu)*(1-bk)})}}}
+function mix(a,b,t){const A=cc(a),B=cc(b);return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join()})`}
+function cc(s){if(s[0]==='#'){const n=parseInt(s.length===4?s.replace(/./g,(m,i)=>i?m+m:m).slice(0):s.slice(1),16);return s.length===4?[0,0,0]:[n>>16&255,n>>8&255,n&255]}return s.match(/\d+/g).map(Number)}
+function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath()}
+function loop(){if(run)return;run=true;(function f(){draw();const t=now();G.anims=G.anims.filter(a=>t-a.t<({slide:640,shake:430,flash:560,hint:2800})[a.k]);
+if(G.anims.length)requestAnimationFrame(f);else{run=false;draw()}})()}
+/* ---------- input & wiring ---------- */
+cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;const r=cv.getBoundingClientRect(),fx=(e.clientX-r.left-geo.ox)/geo.cell,fy=(e.clientY-r.top-geo.oy)/geo.cell,c=Math.floor(fx),rw=Math.floor(fy),{rows,cols}=G.P;
+const at=(a,b)=>a>=0&&a<rows&&b>=0&&b<cols?G.g[a*cols+b]:-1;let id=at(rw,c);
+if(id===-1){let bd=.7225;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const v=at(rw+a,c+b);if(v===-1)continue;const d=(fx-(c+b+.5))**2+(fy-(rw+a+.5))**2;if(d<bd){bd=d;id=v}}}
+if(id!==-1)tap(id)});
+$('prev').onclick=()=>start(G.lv-1);$('next').onclick=()=>start(G.lv+1);$('hint').onclick=hint;$('rst').onclick=reset;
+$('grid').onclick=()=>{S.grid=!S.grid;save();ui();draw()};
+$('thm').onclick=()=>{const d=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
+document.documentElement.dataset.theme=d?'light':'dark';S.dark=!d;save();ui();draw()};
+if(S.dark!==null)document.documentElement.dataset.theme=S.dark?'dark':'light';
+addEventListener('resize',size);new ResizeObserver(size).observe($('stage'));
+S.lv=Math.min(Math.max(1,S.lv|0),S.unlocked|0||1);start(S.lv);size();
+</script></body></html>
